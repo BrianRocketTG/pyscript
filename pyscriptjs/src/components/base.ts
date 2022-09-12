@@ -207,7 +207,7 @@ export class BaseEvalElement extends HTMLElement {
     }
 }
 
-function createWidget(name: string, code: string, klass: string) {
+export function createWidget(name: string, code: string, klass: string) {
     class CustomWidget extends HTMLElement {
         shadow: ShadowRoot;
         wrapper: HTMLElement;
@@ -215,6 +215,7 @@ function createWidget(name: string, code: string, klass: string) {
         name: string = name;
         klass: string = klass;
         code: string = code;
+        originalContent: string;
         proxy: any;
         proxyClass: any;
 
@@ -229,19 +230,9 @@ function createWidget(name: string, code: string, klass: string) {
         }
 
         connectedCallback() {
-            // TODO: we are calling with a 2secs delay to allow pyodide to load
-            //       ideally we can just wait for it to load and then run. To do
-            //       so we need to replace using the promise and actually using
-            //       the interpreter after it loads completely
-            // setTimeout(() => {
-            //     void (async () => {
-            //         await this.eval(this.code);
-            //         this.proxy = this.proxyClass(this);
-            //         console.log('proxy', this.proxy);
-            //         this.proxy.connect();
-            //         this.registerWidget();
-            //     })();
-            // }, 2000);
+            this.originalContent = this.innerHTML;
+            this.innerHTML = '';
+
             runtimeLoaded.subscribe(value => {
                 if ('run' in value) {
                     runtime = value;

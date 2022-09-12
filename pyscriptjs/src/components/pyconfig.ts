@@ -1,7 +1,8 @@
 import * as jsyaml from 'js-yaml';
-import { BaseEvalElement } from './base';
-import { appConfig } from '../stores';
+import { BaseEvalElement, createWidget } from './base';
+import { appConfig, addInitializer, addPostInitializer } from '../stores';
 import type { AppConfig, Runtime } from '../runtime';
+import { handleFetchError, getTextFromUrl } from '../utils';
 import { PyodideRuntime, DEFAULT_RUNTIME_CONFIG } from '../pyodide';
 import { getLogger } from '../logger';
 
@@ -65,6 +66,37 @@ export class PyConfig extends BaseEvalElement {
             const runtimeObj: Runtime = new PyodideRuntime(runtime.src, runtime.name, runtime.lang);
             const script = document.createElement('script'); // create a script DOM node
             script.src = runtimeObj.src; // set its src to the provided URL
+
+
+
+            /* eslint-disable @typescript-eslint/require-await */
+            const registerPluginToRuntime = async function(){
+                // expose _register_pyscript_plugin to enable plugin registration
+                // from Python
+
+                // eslint-disable-next-line
+                // @ts-ignore
+                runtimeObj.globals.set("_register_pyscript_plugin", createWidget);
+            }
+            /* eslint-enable @typescript-eslint/require-await */
+            addInitializer(registerPluginToRuntime);
+
+            const registerPlugins = async function(){
+                // TODO: this needs to be replaced with the list of plugins that is
+                //       defined in the py-config plugins section
+                const paths = ["./hello.py"];
+                for (const path of paths) {
+                    logger.info(`loading plugin: ${path}`);
+                    try {
+                        const source = await getTextFromUrl(path)
+                        await runtimeObj.run(source);
+                    } catch (e) {
+                        //Should we still export full error contents to console?
+                        handleFetchError(<Error>e, path);
+                    }
+                }
+            }
+            addPostInitializer(registerPlugins);
             script.addEventListener('load', () => {
                 void runtimeObj.initialize();
             });
