@@ -84,4 +84,9 @@ function handleFetchError(e: Error, singleFile: string) {
     showError(errorContent);
 }
 
-export { addClasses, removeClasses, getLastPath, ltrim, htmlDecode, guidGenerator, showError, handleFetchError };
+async function getTextFromUrl(s: string): Promise<string> {
+    const response = await fetch(s);
+    return await response.text();
+}
+
+export { addClasses, removeClasses, getLastPath, ltrim, htmlDecode, guidGenerator, showError, handleFetchError, getTextFromUrl };
