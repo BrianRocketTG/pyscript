@@ -25,6 +25,14 @@ MIME_METHODS = {
 }
 
 
+def register_widget(component_name):
+    def dec(_class):
+        _register_pyscript_plugin(component_name, "", _class.__name__)  # noqa: F821
+        return _class
+
+    return dec
+
+
 def render_image(mime, value, meta):
     data = f"data:{mime};charset=utf-8;base64,{value}"
     attrs = " ".join(['{k}="{v}"' for k, v in meta.items()])
@@ -417,6 +425,12 @@ class OutputManager:
         self._err_manager.revert()
         sys.stdout = self._out_manager
         sys.stderr = self._err_manager
+
+
+class PyScriptPlugin:
+    def __init__(self, parent):
+        self.parent = parent
+        self._id = self.parent.id
 
 
 pyscript = PyScript()
